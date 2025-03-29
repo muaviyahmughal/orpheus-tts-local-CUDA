@@ -12,13 +12,13 @@ import queue
 import asyncio
 
 # LM Studio API settings
-API_URL = "http://127.0.0.1:1234/v1/completions"
+API_URL = "http://192.168.100.17:1234/v1/completions"
 HEADERS = {
     "Content-Type": "application/json"
 }
 
 # Model parameters
-MAX_TOKENS = 1200
+MAX_TOKENS = 8192  # Increased for longer narratives
 TEMPERATURE = 0.6
 TOP_P = 0.9
 REPETITION_PENALTY = 1.1
@@ -143,6 +143,17 @@ async def tokens_decoder(token_gen):
                 audio_samples = convert_to_audio(buffer_to_proc, count)
                 if audio_samples is not None:
                     yield audio_samples
+            
+    # Process any remaining tokens at the end
+    if buffer and count > 27:
+        # Pad the buffer to ensure it's divisible by 7
+        while len(buffer) % 7 != 0:
+            buffer.append(buffer[-1])
+        # Process the final chunk
+        buffer_to_proc = buffer[-28:]
+        audio_samples = convert_to_audio(buffer_to_proc, count)
+        if audio_samples is not None:
+            yield audio_samples
 
 def tokens_decoder_sync(syn_token_gen, output_file=None):
     """Synchronous wrapper for the asynchronous token decoder."""
@@ -296,4 +307,4 @@ def main():
     print(f"Audio saved to {output_file}")
 
 if __name__ == "__main__":
-    main() 
+    main()
